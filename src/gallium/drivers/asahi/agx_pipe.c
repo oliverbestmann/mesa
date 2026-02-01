@@ -55,6 +55,7 @@
 #include "shader_enums.h"
 
 uint64_t agx_best_modifiers[] = {
+   DRM_FORMAT_MOD_APPLE_INTERCHANGE_COMPRESSED,
    DRM_FORMAT_MOD_APPLE_GPU_TILED_COMPRESSED,
    DRM_FORMAT_MOD_APPLE_GPU_TILED,
    DRM_FORMAT_MOD_LINEAR,
@@ -83,6 +84,7 @@ void agx_init_state_functions(struct pipe_context *ctx);
 const static char *s_tiling[] = {
    [AIL_TILING_LINEAR] = "LINR",
    [AIL_TILING_GPU] = "GPU",
+   [AIL_TILING_INTERCHANGE] = "XCHG",
 };
 
 #define rsrc_debug(res, ...)                                                   \
@@ -431,10 +433,17 @@ static uint64_t
 agx_select_modifier_from_list(const struct agx_resource *pres,
                               const uint64_t *modifiers, int count)
 {
-   if (agx_twiddled_allowed(pres) && agx_compression_allowed(pres) &&
-       drm_find_modifier(DRM_FORMAT_MOD_APPLE_GPU_TILED_COMPRESSED, modifiers,
-                         count))
-      return DRM_FORMAT_MOD_APPLE_GPU_TILED_COMPRESSED;
+   if (agx_twiddled_allowed(pres) && agx_compression_allowed(pres)) {
+      if (drm_find_modifier(DRM_FORMAT_MOD_APPLE_INTERCHANGE_COMPRESSED,
+                            modifiers, count)) {
+         return DRM_FORMAT_MOD_APPLE_INTERCHANGE_COMPRESSED;
+      }
+
+      if (drm_find_modifier(DRM_FORMAT_MOD_APPLE_GPU_TILED_COMPRESSED,
+                            modifiers, count)) {
+         return DRM_FORMAT_MOD_APPLE_GPU_TILED_COMPRESSED;
+      }
+   }
 
    if (agx_twiddled_allowed(pres) &&
        drm_find_modifier(DRM_FORMAT_MOD_APPLE_GPU_TILED, modifiers, count))
