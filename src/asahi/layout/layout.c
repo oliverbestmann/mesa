@@ -213,6 +213,44 @@ ail_initialize_gpu_tiled(struct ail_layout *layout)
 
    layout->size_B = (uint64_t)layout->layer_stride_B * layout->depth_px;
 }
+static void
+ail_initialize_interchange(struct ail_layout *layout)
+{
+   unsigned blocksize_B = ail_get_block_size_B(layout);
+   unsigned w_el = util_format_get_nblocksx(layout->format, layout->width_px);
+   unsigned h_el = util_format_get_nblocksy(layout->format, layout->height_px);
+   unsigned bw_px = util_format_get_blockwidth(layout->format);
+   unsigned bh_px = util_format_get_blockheight(layout->format);
+   bool compressed = util_format_is_compressed(layout->format);
+
+   /* Expect simple rgba like format with 32bpp  */
+   assert(bw_px == 1 && bh_px == 1);
+   assert(blocksize_B == 4);
+   assert(!compressed);
+
+   /* Do not allow for array textures */
+   assert(layout->depth_px == 1);
+
+   /* Interchange is only used with drm/gbm modifiers, assume scanout only,
+    * no mipmaps
+    */
+   assert(layout->levels == 1);
+
+   /* Assume fixed tilesize of 16x16 px for now. Might be wrong for bpp > 32 */
+   unsigned stx_tiles = DIV_ROUND_UP(w_el, 16);
+   unsigned sty_tiles = DIV_ROUND_UP(h_el, 16);
+   unsigned tile_size = 16 * 16 * blocksize_B;
+
+   layout->tilesize_el[0] = (struct ail_tile){.width_el = 16, .height_el = 16};
+   layout->stride_el[0] = util_format_get_nblocksx(layout->format, w_el);
+   layout->page_aligned_layers = true;
+
+   /* Always align layers to page size */
+   layout->layer_stride_B =
+      ALIGN_POT(stx_tiles * sty_tiles * tile_size, AIL_PAGESIZE);
+
+   layout->size_B = layout->layer_stride_B;
+}
 
 static void
 ail_initialize_twiddled(struct ail_layout *layout)
@@ -372,6 +410,9 @@ ail_make_miptree(struct ail_layout *layout)
       break;
    case AIL_TILING_TWIDDLED:
       ail_initialize_twiddled(layout);
+      break;
+   case AIL_TILING_INTERCHANGE:
+      ail_initialize_interchange(layout);
       break;
    default:
       UNREACHABLE("Unsupported tiling");

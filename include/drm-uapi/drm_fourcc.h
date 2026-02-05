@@ -1599,6 +1599,7 @@ drm_fourcc_canonicalize_nvidia_format_mod(__u64 modifier)
  */
 #define DRM_FORMAT_MOD_APPLE_GPU_TILED fourcc_mod_code(APPLE, 1)
 #define DRM_FORMAT_MOD_APPLE_GPU_TILED_COMPRESSED fourcc_mod_code(APPLE, 2)
+#define DRM_FORMAT_MOD_APPLE_INTERCHANGE_COMPRESSED fourcc_mod_code(APPLE, 3)
 
 /*
  * AMD modifiers

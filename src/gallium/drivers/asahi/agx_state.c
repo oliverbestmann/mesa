@@ -747,6 +747,9 @@ agx_pack_texture(void *out, struct agx_resource *rsrc,
             cfg.depth_linear = layers;
             cfg.layer_stride_linear = (rsrc->layout.layer_stride_B - 0x80);
             cfg.extended = true;
+         } else if (rsrc->layout.tiling == AIL_TILING_INTERCHANGE) {
+            assert(layers == 1);
+            cfg.depth = ALIGN_POT(rsrc->layout.width_px, 16) / 16;
          } else {
             assert((rsrc->layout.tiling != AIL_TILING_LINEAR) || (layers == 1));
             cfg.depth = layers;
@@ -1239,6 +1242,9 @@ agx_batch_upload_pbe(struct agx_batch *batch, struct agx_pbe_packed *out,
             cfg.depth_linear = layers;
             cfg.layer_stride_linear = (tex->layout.layer_stride_B - 0x80);
             cfg.extended = true;
+         } else if (tex->layout.tiling == AIL_TILING_INTERCHANGE) {
+            assert(layers == 1);
+            cfg.layers = ALIGN_POT(tex->layout.width_px, 16) / 16;
          } else {
             assert((tex->layout.tiling != AIL_TILING_LINEAR) || (layers == 1));
             cfg.layers = layers;
