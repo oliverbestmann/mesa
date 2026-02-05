@@ -865,3 +865,10 @@ option(
   type : 'feature',
   description : 'Use SPIRV-Tools for dumping SPIR-V for debugging purposes (required by CLC)'
 )
+
+option(
+  'clang-libdir',
+  type : 'string',
+  value : '',
+  description : 'Locations to search for clang libraries.'
+)
