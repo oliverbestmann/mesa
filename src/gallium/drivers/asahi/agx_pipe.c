@@ -57,6 +57,7 @@
 
 uint64_t agx_best_modifiers[] = {
    DRM_FORMAT_MOD_APPLE_GPU_TILED_COMPRESSED,
+   DRM_FORMAT_MOD_APPLE_INTERCHANGE_COMPRESSED,
    DRM_FORMAT_MOD_APPLE_GPU_TILED,
    DRM_FORMAT_MOD_LINEAR,
 };
@@ -84,6 +85,7 @@ void agx_init_state_functions(struct pipe_context *ctx);
 const static char *s_tiling[] = {
    [AIL_TILING_LINEAR] = "LINR",
    [AIL_TILING_GPU] = "GPU",
+   [AIL_TILING_INTERCHANGE] = "XCHG",
 };
 
 #define rsrc_debug(res, ...)                                                   \
@@ -428,14 +430,49 @@ agx_compression_allowed(const struct agx_resource *pres)
    return true;
 }
 
+static bool
+agx_interchange_allowed(const struct agx_resource *pres)
+{
+   /** Limit to RGB formats */
+   switch (pres->base.format) {
+   case PIPE_FORMAT_R8G8B8X8_UNORM:
+   case PIPE_FORMAT_R8G8B8A8_UNORM:
+   case PIPE_FORMAT_B8G8R8X8_UNORM:
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
+   case PIPE_FORMAT_A8B8G8R8_UNORM:
+   case PIPE_FORMAT_X8R8G8B8_UNORM:
+   case PIPE_FORMAT_X8B8G8R8_UNORM:
+   case PIPE_FORMAT_A2R10G10B10_UNORM:
+   case PIPE_FORMAT_A2B10G10R10_UNORM:
+   case PIPE_FORMAT_R10G10B10X2_UNORM:
+   case PIPE_FORMAT_R10G10B10A2_UNORM:
+   case PIPE_FORMAT_B10G10R10X2_UNORM:
+   case PIPE_FORMAT_B10G10R10A2_UNORM:
+      return true;
+
+   default:
+      return false;
+   }
+}
+
 static uint64_t
 agx_select_modifier_from_list(const struct agx_resource *pres,
                               const uint64_t *modifiers, int count)
 {
-   if (agx_twiddled_allowed(pres) && agx_compression_allowed(pres) &&
-       drm_find_modifier(DRM_FORMAT_MOD_APPLE_GPU_TILED_COMPRESSED, modifiers,
-                         count))
-      return DRM_FORMAT_MOD_APPLE_GPU_TILED_COMPRESSED;
+   if (agx_twiddled_allowed(pres) && agx_compression_allowed(pres)) {
+      if (agx_interchange_allowed(pres) &&
+          drm_find_modifier(DRM_FORMAT_MOD_APPLE_INTERCHANGE_COMPRESSED,
+                            modifiers, count)) {
+
+         return DRM_FORMAT_MOD_APPLE_INTERCHANGE_COMPRESSED;
+      }
+
+      if (drm_find_modifier(DRM_FORMAT_MOD_APPLE_GPU_TILED_COMPRESSED,
+                            modifiers, count)) {
+         return DRM_FORMAT_MOD_APPLE_GPU_TILED_COMPRESSED;
+      }
+   }
 
    if (agx_twiddled_allowed(pres) &&
        drm_find_modifier(DRM_FORMAT_MOD_APPLE_GPU_TILED, modifiers, count))

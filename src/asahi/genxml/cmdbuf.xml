@@ -246,6 +246,7 @@
     array texture (with a layered framebuffer) -->
     <field name="Levels" size="4" start="104" type="uint" modifier="minus(1)"/>
     <field name="Layers" size="14" start="108" type="uint" modifier="minus(1)"/>
+    <field name="Stride in tiles" size="14" start="108" type="uint" modifier="minus(1)"/>
     <field name="Page-aligned layers" size="1" start="124" type="bool"/>
 
     <!-- Should writes to this image convert to sRGB?
@@ -308,6 +309,8 @@
     <!-- Note that 3D/arrays cannot be linear. -->
     <field name="Depth" size="14" start="110" type="uint" modifier="minus(1)"/>
     <field name="Page-aligned layers" size="1" start="126" type="bool"/>
+    <!-- If laouyt is interchanged -->
+    <field name="Stride in tiles" size="14" start="110" type="uint" modifier="minus(1)"/>
 
     <!-- Read the next word (set for compression or linear 2D arrays) -->
     <field name="Extended" size="1" start="127" type="bool"/>
