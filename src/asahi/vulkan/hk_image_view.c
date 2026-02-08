@@ -343,6 +343,9 @@ pack_texture(struct hk_image_view *view, unsigned view_plane,
          cfg.depth_linear = layers;
          cfg.layer_stride_linear = layout->layer_stride_B - 0x80;
          cfg.extended = true;
+      } else if (layout->tiling == AIL_TILING_INTERCHANGE) {
+         assert(layers == 1);
+         cfg.depth = ALIGN_POT(layout->width_px, 16) / 16;
       } else {
          assert((layout->tiling != AIL_TILING_LINEAR) || (layers == 1));
          cfg.depth = layers;
@@ -463,6 +466,9 @@ pack_pbe(struct hk_device *dev, struct hk_image_view *view, unsigned view_plane,
             cfg.depth_linear = layers;
             cfg.layer_stride_linear = (layout->layer_stride_B - 0x80);
             cfg.extended = true;
+         } else if (layout->tiling == AIL_TILING_INTERCHANGE) {
+            assert(layers == 1);
+            cfg.layers = ALIGN_POT(layout->width_px, 16) / 16;
          } else {
             assert((layout->tiling != AIL_TILING_LINEAR) || (layers == 1));
             cfg.layers = layers;

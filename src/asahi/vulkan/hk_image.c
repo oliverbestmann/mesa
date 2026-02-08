@@ -748,6 +748,9 @@ static uint32_t
 modifier_get_score(uint64_t mod)
 {
    switch (mod) {
+   case DRM_FORMAT_MOD_APPLE_INTERCHANGE_COMPRESSED:
+      return 15;
+
    case DRM_FORMAT_MOD_APPLE_GPU_TILED_COMPRESSED:
       return 10;
 
