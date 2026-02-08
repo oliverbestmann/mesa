@@ -19,6 +19,16 @@ extern "C" {
 #define AIL_PAGESIZE       0x4000
 #define AIL_MAX_MIP_LEVELS 16
 
+/** TODO remove this if defined upstream at some point maybe */
+#ifndef DRM_FORMAT_MOD_APPLE_INTERCHANGE_COMPRESSED
+/**
+ * The interchange compressed format closely resembles the GPU tiled compressed
+ * format. It features 16x16px compressed tiles arranged in scanline order.
+ * Unlike the GPU format, the tiles are not grouped into 16kb chunks.
+ */
+#define DRM_FORMAT_MOD_APPLE_INTERCHANGE_COMPRESSED fourcc_mod_code(APPLE, 3)
+#endif
+
 enum ail_tiling {
    /**
     * Strided linear (raster order). Only allowed for 1D or 2D, without
