@@ -749,6 +749,9 @@ modifier_get_score(uint64_t mod)
 {
    switch (mod) {
    case DRM_FORMAT_MOD_APPLE_GPU_TILED_COMPRESSED:
+      return 15;
+
+   case DRM_FORMAT_MOD_APPLE_INTERCHANGE_COMPRESSED:
       return 10;
 
    case DRM_FORMAT_MOD_APPLE_GPU_TILED:
@@ -777,8 +780,7 @@ choose_drm_format_mod(struct hk_device *dev, uint8_t plane_count,
    }
 
    for (uint32_t i = 0; i < modifier_count; ++i) {
-      if (!can_compress &&
-          modifiers[i] == DRM_FORMAT_MOD_APPLE_GPU_TILED_COMPRESSED)
+      if (!can_compress && ail_is_drm_modifier_compressed(modifiers[i]))
          continue;
 
       uint32_t score = modifier_get_score(modifiers[i]);

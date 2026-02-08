@@ -15,14 +15,31 @@
 #include "hk_image.h"
 #include "hk_physical_device.h"
 
+#include "layout.h"
 #include "vk_enum_defines.h"
 #include "vk_format.h"
 
 uint64_t agx_best_modifiers[] = {
    DRM_FORMAT_MOD_APPLE_GPU_TILED_COMPRESSED,
+   DRM_FORMAT_MOD_APPLE_INTERCHANGE_COMPRESSED,
    DRM_FORMAT_MOD_APPLE_GPU_TILED,
    DRM_FORMAT_MOD_LINEAR,
 };
+
+static bool
+hk_allow_interchange_tiling(VkFormat vk_format)
+{
+   switch (vk_format) {
+   case VK_FORMAT_R8G8B8A8_UNORM:
+   case VK_FORMAT_B8G8R8A8_UNORM:
+   case VK_FORMAT_A2R10G10B10_UNORM_PACK32:
+   case VK_FORMAT_A2B10G10R10_UNORM_PACK32:
+      return true;
+
+   default:
+      return false;
+   }
+}
 
 static VkFormatFeatureFlags2
 hk_modifier_features(const struct agx_device *dev, uint64_t mod,
@@ -35,8 +52,13 @@ hk_modifier_features(const struct agx_device *dev, uint64_t mod,
    }
 
    /* Don't advertise compression for the uncompressable */
-   if (mod == DRM_FORMAT_MOD_APPLE_GPU_TILED_COMPRESSED &&
+   if (ail_is_drm_modifier_compressed(mod) &&
        !hk_can_compress_format(dev, vk_format))
+      return 0;
+
+   /* Only advertise interchange for some blessed formats */
+   if (mod == DRM_FORMAT_MOD_APPLE_INTERCHANGE_COMPRESSED &&
+       !hk_allow_interchange_tiling(vk_format))
       return 0;
 
    if (mod == DRM_FORMAT_MOD_LINEAR)
