@@ -200,18 +200,26 @@ ail_get_linear_stride_B(const struct ail_layout *layout, ASSERTED uint8_t level)
  * hardware, only strided linear images have an associated stride, there is no
  * natural stride associated with nonlinear images. However, various clients
  * assert that the stride is valid for the image if it were linear (even if it
- * is in fact not linear). In those cases, by convention we use the minimum
- * valid such stride.
+ * is in fact not linear). In those cases, by convention we use a stride
+ * greather than or equal to the minimum valid stride.
  */
 static inline uint32_t
 ail_get_wsi_stride_B(const struct ail_layout *layout, unsigned level)
 {
    assert(level == 0 && "Mipmaps cannot be shared as WSI");
 
-   if (layout->tiling == AIL_TILING_LINEAR)
+   switch (layout->tiling) {
+   case AIL_TILING_LINEAR:
       return ail_get_linear_stride_B(layout, level);
-   else
+
+   case AIL_TILING_INTERCHANGE: {
+      uint32_t stride = util_format_get_stride(layout->format, layout->width_px);
+      return ALIGN_POT(stride, 64);
+   }
+
+   default:
       return util_format_get_stride(layout->format, layout->width_px);
+   }
 }
 
 static inline uint32_t
